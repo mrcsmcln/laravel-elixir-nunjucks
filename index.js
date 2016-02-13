@@ -33,6 +33,8 @@ Elixir.extend('nunjucks', function(src, output, options) {
     };
 
     var paths = prepGulpPaths(src, output);
+    var watchPath = options && options.path ? 
+        options.path + '/**/*' : config.nunjucks.options.path + '/**/*';
 
     new Elixir.Task('nunjucks', function() {
         this.log(paths.src, paths.output);
@@ -50,7 +52,7 @@ Elixir.extend('nunjucks', function(src, output, options) {
             .pipe(new Elixir.Notification('Nunjucks Compiled!'))
         );
     })
-    .watch(paths.src.path)
+    .watch(watchPath)
     .ignore(paths.output.path)
 });
 
