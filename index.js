@@ -3,6 +3,11 @@ var Elixir = require('laravel-elixir');
 
 var $ = Elixir.Plugins;
 var config = Elixir.config;
+var _ = require('underscore');
+
+_.mixin({
+    deepExtend: require('underscore-deep-extend')(_)
+});
 
 $.nunjucksRender = require('gulp-nunjucks-render');
 
@@ -42,7 +47,7 @@ Elixir.extend('nunjucks', function(src, output, options) {
         return (
             gulp
             .src(paths.src.path)
-            .pipe($.nunjucksRender(options || config.nunjucks.options)
+            .pipe($.nunjucksRender(_.deepExtend(config.nunjucks.options, options))
                 .on('error', function(e) {
                     new Elixir.Notification().error(e, 'Nunjucks Compilation Failed!');
 
