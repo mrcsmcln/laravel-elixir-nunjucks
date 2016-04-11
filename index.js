@@ -3,14 +3,15 @@ var Elixir = require('laravel-elixir');
 
 var $ = Elixir.Plugins;
 var config = Elixir.config;
+
+$.nunjucksRender = require('gulp-nunjucks-render');
+$.htmlmin = require('gulp-htmlmin');
+
 var _ = require('underscore');
 
 _.mixin({
     deepExtend: require('underscore-deep-extend')(_)
 });
-
-$.nunjucksRender = require('gulp-nunjucks-render');
-$.htmlmin = require('gulp-htmlmin');
 
 /*
  |----------------------------------------------------------------
@@ -23,60 +24,32 @@ $.htmlmin = require('gulp-htmlmin');
  |
  */
 
-Elixir.extend('nunjucks', function(src, output, nunjucksOptions, htmlminOptions) {
-    nunjucksOptions = typeof nunjucksOptions !== 'undefined' ?  nunjucksOptions : {};
-    htmlminOptions = typeof htmlminOptions !== 'undefined' ?  htmlminOptions : {};
-    config.templating = typeof config.templating !== 'undefined' ? config.templating : {};
-
+Elixir.extend('nunjucks', function (src, output, options) {
+    config.templating = config.templating ? config.templating : {};
     config.templating.nunjucks = _.deepExtend({
         folder: 'nunjucks',
         outputFolder: '',
         options: {
-            path: 'resources/assets/nunjucks',
-            inheritExtension: true,
-            envOptions: {
-                tags: {
-                    variableStart: '{$',
-                    variableEnd: '$}'
-                }
-            }
+            path: 'resources/assets/nunjucks'
         }
-    }, config.templating.nunjucks, {
-        options: nunjucksOptions
-    });
-
-    config.templating.htmlmin = _.deepExtend({
-        removeComments: true,
-        removeCommentsFromCDATA: true,
-        removeCDATASectionsFromCDATA: true,
-        collapseWhitespace: true,
-        conservativeCollapse: true,
-        collapseBooleanAttributes: true,
-        removeScriptTypeAttributes: true,
-        removeStyleLinkTypeAttributes: true,
-        caseSensitive: true
-    }, config.templating.htmlmin, htmlminOptions)
+    }, config.templating.nunjucks);
 
     var paths = prepGulpPaths(src, output);
 
-    new Elixir.Task('nunjucks', function() {
+    new Elixir.Task('nunjucks', function () {
         this.log(paths.src, paths.output);
 
-        return (
-            gulp
+        return gulp
             .src(paths.src.path)
-            .pipe($.nunjucksRender(config.templating.nunjucks.options)
+            .pipe($.nunjucksRender(options || config.templating.nunjucks.options)
                 .on('error', function(e) {
                     new Elixir.Notification().error(e, 'Nunjucks Compilation Failed!');
-
                     this.emit('end');
-                }))
-            .pipe($.if(config.production, $.htmlmin(config.templating.htmlmin)))
-            .pipe(gulp.dest(paths.output.baseDir))
+                })
+            ).pipe(gulp.dest(paths.output.baseDir))
             .pipe(new Elixir.Notification('Nunjucks Compiled!'))
-        );
-    })
-    .watch(config.templating.nunjucks.options.path + '/**/*')
+        ;
+    }).watch(config.get('assets.templating.nunjucks.folder') + '**/*')
     .ignore(paths.output.path)
 });
 
@@ -85,12 +58,12 @@ Elixir.extend('nunjucks', function(src, output, nunjucksOptions, htmlminOptions)
  * Prep the Gulp src and output paths.
  *
  * @param  {string|Array} src
- * @param  {string|null}  baseDir
  * @param  {string|null}  output
  * @return {GulpPaths}
  */
-var prepGulpPaths = function(src, output) {
+var prepGulpPaths = function (src, output) {
     return new Elixir.GulpPaths()
         .src(src, config.get('assets.templating.nunjucks.folder'))
-        .output(output || config.get('public.templating.nunjucks.outputFolder'), '.');
+        .output(output || config.get('public.templating.nunjucks.outputFolder'), '.')
+    ;
 }
