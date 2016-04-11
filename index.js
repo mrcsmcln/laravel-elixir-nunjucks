@@ -5,7 +5,6 @@ var $ = Elixir.Plugins;
 var config = Elixir.config;
 
 $.nunjucksRender = require('gulp-nunjucks-render');
-$.htmlmin = require('gulp-htmlmin');
 
 var _ = require('underscore');
 
@@ -42,14 +41,14 @@ Elixir.extend('nunjucks', function (src, output, options) {
         return gulp
             .src(paths.src.path)
             .pipe($.nunjucksRender(options || config.templating.nunjucks.options)
-                .on('error', function(e) {
-                    new Elixir.Notification().error(e, 'Nunjucks Compilation Failed!');
+                .on('error', function (error) {
+                    new Elixir.Notification().error(error, 'Nunjucks Compilation Failed!');
                     this.emit('end');
                 })
             ).pipe(gulp.dest(paths.output.baseDir))
             .pipe(new Elixir.Notification('Nunjucks Compiled!'))
         ;
-    }).watch(config.get('assets.templating.nunjucks.folder') + '**/*')
+    }).watch(config.get('assets.templating.nunjucks.folder') + '/**/*')
     .ignore(paths.output.path)
 });
 
