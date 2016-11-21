@@ -1,20 +1,12 @@
-var gulp = require('gulp');
-var Elixir = require('laravel-elixir');
+const gulp = require('gulp');
+const Elixir = require('laravel-elixir');
+const extend = require('lodash/extend');
 
-var $ = Elixir.Plugins;
-var config = Elixir.config;
-
-$.nunjucksRender = require('gulp-nunjucks-render');
-
-var _ = require('underscore');
-
-_.mixin({
-    deepExtend: require('underscore-deep-extend')(_)
-});
+let gulpNunjucksRender;
 
 /*
  |----------------------------------------------------------------
- | Nunjucks Compilation
+ | Nunjucks Compilation Task
  |----------------------------------------------------------------
  |
  | This task offers a simple way to render your Nunjucks assets.
@@ -23,46 +15,88 @@ _.mixin({
  |
  */
 
-Elixir.extend('nunjucks', function (src, output, options) {
-    config.templating = config.templating ? config.templating : {};
-    config.templating.nunjucks = _.deepExtend({
-        folder: 'nunjucks',
-        outputFolder: '',
-        options: {
-            path: 'resources/assets/nunjucks'
-        }
-    }, config.templating.nunjucks);
+Elixir.config.nunjucks = {
+    folder: 'nunjucks',
+    outputFolder: '',
+    search: '/**/*',
+    options: {
+        watch: Elixir.isWatching(),
+        path: 'resources/assets/nunjucks',
+    },
+ };
 
-    var paths = prepGulpPaths(src, output);
+class NunjucksTask extends Elixir.Task {
+    /**
+     * Create a new NunjucksTask instance.
+     *
+     * @param {string}      name
+     * @param {GulpPaths}   paths
+     * @param {object|null} options
+     */
+    constructor(name, paths, options) {
+        super(name, null, paths);
 
-    new Elixir.Task('nunjucks', function () {
-        this.log(paths.src, paths.output);
+        this.options = options;
+    }
 
-        return gulp
-            .src(paths.src.path)
-            .pipe($.nunjucksRender(options || config.templating.nunjucks.options)
-                .on('error', function (error) {
-                    new Elixir.Notification().error(error, 'Nunjucks Compilation Failed!');
-                    this.emit('end');
-                })
-            ).pipe(gulp.dest(paths.output.baseDir))
-            .pipe(new Elixir.Notification('Nunjucks Compiled!'))
+    /**
+     * Lazy load the task dependencies.
+     */
+    loadDependencies() {
+        gulpNunjucksRender = require('gulp-nunjucks-render');
+    }
+
+    /**
+     * Build the Gulp task.
+     */
+    gulpTask($) {
+        return (
+            gulp
+            .src(this.src.path)
+            .pipe(this.nunjucks())
+            .on('error', this.onError())
+            .pipe($.if(!this.output.isDir, $.rename(this.output.name)))
+            .pipe(this.saveAs(gulp))
+            .pipe(this.onSuccess())
+        );
+    }
+
+    /**
+     * Run the files through Nunjucks.
+     */
+    nunjucks() {
+        this.recordStep('Running Nunjucks');
+
+        return gulpNunjucksRender(extend({
+            path: Elixir.config.get('assets.nunjucks.folder'),
+        }, Elixir.config.nunjucks.options, this.options));
+    }
+
+    /**
+     * Register file watchers.
+     */
+    registerWatchers() {
+        this
+            .watch(`${Elixir.config.get('assets.nunjucks.folder')}/**/*`)
+            .ignore(this.output.path)
         ;
-    }).watch(config.get('assets.templating.nunjucks.folder') + '/**/*')
-    .ignore(paths.output.path)
-});
+    }
+}
 
+ Elixir.extend('nunjucks', (src, output, baseDir, options) => {
+    new NunjucksTask('nunjucks', getPaths(src, baseDir, output), options);
+ });
 
-/**
+ /**
  * Prep the Gulp src and output paths.
  *
  * @param  {string|Array} src
+ * @param  {string|null}  baseDir
  * @param  {string|null}  output
  * @return {GulpPaths}
  */
-var prepGulpPaths = function (src, output) {
+var getPaths = function(src, baseDir, output) {
     return new Elixir.GulpPaths()
-        .src(src, config.get('assets.templating.nunjucks.folder'))
-        .output(output || config.get('public.templating.nunjucks.outputFolder'), '.')
-    ;
-}
+        .src(src || '', baseDir || Elixir.config.get('assets.nunjucks.folder'))
+        .output(output || Elixir.config.get('public.nunjucks.outputFolder'), 'app.html');
+};

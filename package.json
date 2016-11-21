@@ -1,11 +1,8 @@
 {
   "name": "laravel-elixir-nunjucks",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Laravel Elixir Nunjucks Extension",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "keywords": [
     "laravel",
     "elixir",
@@ -16,13 +13,16 @@
     "type": "git",
     "url": "https://github.com/mrcsmcln/laravel-elixir-nunjucks"
   },
-  "author": "Marcus McLean",
+  "author": {
+    "name": "Marcus McLean"
+  },
   "license": "MIT",
   "homepage": "https://github.com/mrcsmcln/laravel-elixir-nunjucks",
   "bugs": {
     "url": "https://github.com/mrcsmcln/laravel-elixir-nunjucks/issues"
   },
   "dependencies": {
-    "gulp-nunjucks-render": "^2.0.0"
+    "gulp-nunjucks-render": "^2.0.0",
+    "lodash": "^4.17.2"
   }
 }
