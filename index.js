@@ -1,6 +1,5 @@
 const gulp = require('gulp');
 const Elixir = require('laravel-elixir');
-const extend = require('lodash/extend');
 
 let gulpNunjucksRender;
 
@@ -20,7 +19,6 @@ Elixir.config.nunjucks = {
     outputFolder: '',
     search: '/**/*',
     options: {
-        watch: Elixir.isWatching(),
         path: 'resources/assets/nunjucks',
     },
  };
@@ -67,9 +65,10 @@ class NunjucksTask extends Elixir.Task {
     nunjucks() {
         this.recordStep('Running Nunjucks');
 
-        return gulpNunjucksRender(extend({
-            path: Elixir.config.get('assets.nunjucks.folder'),
-        }, Elixir.config.nunjucks.options, this.options));
+        return gulpNunjucksRender(Object.assign(
+            Elixir.config.nunjucks.options,
+            this.options
+        ));
     }
 
     /**
