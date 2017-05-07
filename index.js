@@ -76,7 +76,7 @@ class NunjucksTask extends Elixir.Task {
      */
     registerWatchers() {
         this
-            .watch(`${Elixir.config.get('assets.nunjucks.folder')}/**/*`)
+            .watch(Elixir.config.get('assets.nunjucks.search'))
             .ignore(this.output.path)
         ;
     }
